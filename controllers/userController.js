@@ -8,8 +8,30 @@ exports.getAllAdmins = async (req, res) => {
 };
 // Super Admin Approval
 exports.getPendingAdmins = async (req, res) => {
-  const admins = await User.find({ role: "admin", isApproved: false });
-  res.json(admins);
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const skip = (page - 1) * limit;
+
+    const filter = { role: "admin", isApproved: false };
+
+    const total = await User.countDocuments(filter);
+    const admins = await User.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // optional: newest first
+
+    res.json({
+      total, // total count of pending admins
+      page,
+      limit,
+      admins, // paginated data
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch pending admins", error: err.message });
+  }
 };
 
 exports.approveAdmin = async (req, res) => {
