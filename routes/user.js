@@ -3,7 +3,7 @@ const { auth, role } = require("../middlewares/auth");
 const {
   getAllAdmins,
   getPendingAdmins,
-  approveAdmin,
+  approveOrRejectAdmin,
   getPendingTeachers,
   approveTeacher,
   getPendingStudents,
@@ -16,7 +16,12 @@ router.get("/admins", auth, role(["super_admin"]), getAllAdmins);
 
 // Super Admin - Approve Admins
 router.get("/admins/pending", auth, role(["super_admin"]), getPendingAdmins);
-router.put("/admins/:id/approve", auth, role(["super_admin"]), approveAdmin);
+router.put(
+  "/admins/:id/approval",
+  auth,
+  role(["super_admin"]),
+  approveOrRejectAdmin
+);
 
 // Admin - Approve Teachers and Students
 router.get("/teachers/pending", auth, role(["admin"]), getPendingTeachers);

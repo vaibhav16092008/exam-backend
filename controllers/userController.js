@@ -34,34 +34,58 @@ exports.getPendingAdmins = async (req, res) => {
   }
 };
 
-exports.approveAdmin = async (req, res) => {
+exports.approveOrRejectAdmin = async (req, res) => {
+  const { isApproved } = req.body; // true or false
+
   try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        isApproved: true,
-        approvedBy: req.user._id,
-      },
-      { new: true }
-    );
+    if (isApproved === true) {
+      // Approve user
+      const user = await User.findByIdAndUpdate(
+        req.params.id,
+        {
+          isApproved: true,
+          approvedBy: req.user._id,
+        },
+        { new: true }
+      );
 
-    // Check if user exists and is updated
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Send approval email
+      await sendEmail(
+        user.email,
+        "Account Approved ✅",
+        `<h3>Hello ${user.name},</h3>
+        <p>Your account has been approved. You can now log in and access your dashboard.</p>
+        <p>Thank you!</p>`
+      );
+
+      return res.json({ message: "Admin approved and email sent", user });
+    } else {
+      // Reject user - delete user
+      const user = await User.findByIdAndDelete(req.params.id);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Send rejection email (optional)
+      await sendEmail(
+        user.email,
+        "Account Rejected ❌",
+        `<h3>Hello ${user.name},</h3>
+        <p>We regret to inform you that your admin account request has been rejected.</p>
+        <p>If you think this was a mistake, please contact support.</p>`
+      );
+
+      return res.json({ message: "Admin rejected and user deleted" });
     }
-
-    // Send approval email
-    await sendEmail(
-      user.email,
-      "Account Approved ✅",
-      `<h3>Hello ${user.name},</h3>
-      <p>Your account has been approved. You can now log in and access your dashboard.</p>
-      <p>Thank you!</p>`
-    );
-
-    res.json({ message: "Admin approved and email sent", user });
   } catch (err) {
-    res.status(500).json({ message: "Approval failed", details: err.message });
+    return res
+      .status(500)
+      .json({ message: "Action failed", details: err.message });
   }
 };
 
