@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const { auth, role } = require("../middlewares/auth");
 const {
-  getAllAdmins,
   getPendingAdmins,
   approveOrRejectAdmin,
   getPendingTeachers,
@@ -9,10 +8,11 @@ const {
   getPendingStudents,
   approveStudent,
   getUserProfile,
+  getAllUsers,
 } = require("../controllers/userController");
 
 //Get All Admins
-router.get("/admins", auth, role(["super_admin"]), getAllAdmins);
+router.get("/all", auth, role(["super_admin"]), getAllUsers);
 
 // Super Admin - Approve Admins
 router.get("/admins/pending", auth, role(["super_admin"]), getPendingAdmins);

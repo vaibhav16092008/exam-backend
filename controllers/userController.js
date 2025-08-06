@@ -2,9 +2,29 @@ const User = require("../models/User");
 const sendEmail = require("../utils/sendEmail");
 
 // Get all Admins
-exports.getAllAdmins = async (req, res) => {
-  const admins = await User.find({ role: "admin" });
-  res.json(admins);
+exports.getAllUsers = async (req, res) => {
+  const limit = parseInt(req.query.limit) || 10;
+  const page = parseInt(req.query.page) || 1;
+  const skip = (page - 1) * limit;
+
+  const filter = { role: req.query.role };
+
+  const total = await User.countDocuments(filter);
+  const users = await User.find(filter)
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 })
+    .populate({
+      path: "approvedBy",
+      select: "name email",
+    });
+
+  res.json({
+    total,
+    page,
+    limit,
+    users,
+  });
 };
 // Super Admin Approval
 exports.getPendingAdmins = async (req, res) => {
