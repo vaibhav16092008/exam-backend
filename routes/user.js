@@ -9,10 +9,12 @@ const {
   approveStudent,
   getUserProfile,
   getAllUsers,
+  getUserById,
 } = require("../controllers/userController");
 
 //Get All Admins
 router.get("/all", auth, role(["super_admin"]), getAllUsers);
+router.get("/:id", auth, getUserById);
 
 // Super Admin - Approve Admins
 router.get("/admins/pending", auth, role(["super_admin"]), getPendingAdmins);

@@ -214,3 +214,24 @@ exports.getUserProfile = async (req, res) => {
     });
   }
 };
+
+// Get user by ID
+exports.getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id)
+      .populate("instituteId", "name") // Institute ka sirf name
+      .populate("classId", "name") // Class ka sirf name
+      .populate("approvedBy", "name email");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
