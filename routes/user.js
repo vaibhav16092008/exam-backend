@@ -12,6 +12,7 @@ const {
   getUserById,
 } = require("../controllers/userController");
 
+router.get("/get-profile", auth, getUserProfile);
 //Get All Admins
 router.get("/all", auth, role(["super_admin"]), getAllUsers);
 router.get("/:id", auth, getUserById);
@@ -30,7 +31,5 @@ router.get("/teachers/pending", auth, role(["admin"]), getPendingTeachers);
 router.put("/teachers/:id/approve", auth, role(["admin"]), approveTeacher);
 router.get("/students/pending", auth, role(["admin"]), getPendingStudents);
 router.put("/students/:id/approve", auth, role(["admin"]), approveStudent);
-
-router.get("/get-profile", auth, getUserProfile);
 
 module.exports = router;

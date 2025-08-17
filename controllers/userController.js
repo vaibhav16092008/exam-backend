@@ -3,29 +3,50 @@ const sendEmail = require("../utils/sendEmail");
 
 // Get all Admins
 exports.getAllUsers = async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
-  const page = parseInt(req.query.page) || 1;
-  const skip = (page - 1) * limit;
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const skip = (page - 1) * limit;
 
-  const filter = { role: req.query.role };
+    const { role, search } = req.query;
 
-  const total = await User.countDocuments(filter);
-  const users = await User.find(filter)
-    .skip(skip)
-    .limit(limit)
-    .sort({ createdAt: -1 })
-    .populate({
-      path: "approvedBy",
-      select: "name email",
+    // Base filter
+    let filter = {};
+    if (role) {
+      filter.role = role;
+    }
+
+    // ✅ Search by name or email (case-insensitive)
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const total = await User.countDocuments(filter);
+
+    const users = await User.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "approvedBy",
+        select: "name email",
+      });
+
+    res.json({
+      total,
+      page,
+      limit,
+      users,
     });
-
-  res.json({
-    total,
-    page,
-    limit,
-    users,
-  });
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ message: "Server Error", details: err });
+  }
 };
+
 // Super Admin Approval
 exports.getPendingAdmins = async (req, res) => {
   try {
@@ -191,7 +212,7 @@ exports.approveStudent = async (req, res) => {
 
 exports.getUserProfile = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user._id || req.user.id;
 
     const user = await User.findById(userId)
       .populate("instituteId", "name")
